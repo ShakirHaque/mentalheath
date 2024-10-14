@@ -1,0 +1,43 @@
+import pandas as pd
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, classification_report
+
+# Load the training and test datasets
+train_df = pd.read_csv('train_data_mental.csv')
+test_df = pd.read_csv('test_data_mental.csv')
+
+# Handle missing values: Drop rows with missing values in 'statement' or 'status' columns
+train_df.dropna(subset=['statement', 'status'], inplace=True)
+test_df.dropna(subset=['statement', 'status'], inplace=True)
+
+# Alternatively, fill missing values in the 'statement' column with an empty string (optional)
+train_df['statement'].fillna('', inplace=True)
+test_df['statement'].fillna('', inplace=True)
+
+# Extract features and labels
+X_train = train_df['statement']
+y_train = train_df['status']
+X_test = test_df['statement']
+y_test = test_df['status']
+
+# Create a pipeline to vectorize the text data and train a logistic regression model
+pipeline = Pipeline([
+    ('tfidf', TfidfVectorizer(max_features=5000)),
+    ('model', LogisticRegression(max_iter=1000))
+])
+
+# Train the pipeline using the training data
+pipeline.fit(X_train, y_train)
+
+# Make predictions on the test data
+y_pred = pipeline.predict(X_test)
+
+# Calculate and print the overall accuracy
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Overall Accuracy: {accuracy * 100:.2f}%')
+
+# Calculate and print the classification report to show precision, recall, and F1-score for each label
+print('\nClassification Report:')
+print(classification_report(y_test, y_pred, target_names=y_train.unique()))
